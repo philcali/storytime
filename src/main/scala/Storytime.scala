@@ -3,7 +3,7 @@ package storytime
 object Storytime {
   def main (args: Array[String]) {
     args match { 
-      case Array(markdown) => Output(Converter(markdown))
+      case Array(markdown) => DefaultTemplate(Converter(markdown))
       case _ => println("Provide a markdown file as input")
     }
   }

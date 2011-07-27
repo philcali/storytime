@@ -49,6 +49,7 @@ case class StoryChunk(key: String, content: String) extends Chunk {
 object StoryMode {
   val preprocessors = collection.mutable.ListBuffer[StoryPreprocessor]()
 
+  // Default Macros
   val handlers = collection.mutable.ListBuffer[StoryHandler](new BuildHandler)
 }
 
@@ -117,22 +118,14 @@ object Converter extends StoryDiscounter {
 
     val slides = Slides create preprocessed map (knockoff(_)) 
 
-    slides foreach (println)
-
     slides map (toXHTML(_))
   }
 }
 
-object Output {
+trait FileOutput extends HtmlOutput {
   import java.io._
-
-  val theme = "default"
-  val output = "converted"
-
-  val templated = """\#\{\s?(\w+)\s?\}\#""".r
-
-  def resource(name: String) = 
-    this.getClass.getClassLoader.getResourceAsStream(theme + "/" + name)
+  
+  val output: String
 
   def outsource(name: String) = {
     val filename = output + "/" + name
@@ -148,7 +141,45 @@ object Output {
     }
   }
 
-  def toArticles(contents: Seq[xml.Node]) = {
+  override def apply(converted: Seq[xml.Node]) = {
+    resources foreach (res => copy(resource(res), outsource(res)))
+   
+    val result = super.apply(converted)
+ 
+    val writer = new FileWriter(output + "/index.html")
+    writer.write(result)
+    writer.close
+
+    "Success"
+  }
+}
+
+trait HtmlOutput extends StoryTemplate {
+  def resources: List[String]
+
+  def resource(name: String) = 
+    this.getClass.getClassLoader.getResourceAsStream(key + "/" + name)
+
+  def apply(converted: Seq[xml.Node]) = {
+    "<!DOCTYPE>\n" + template(converted).toString 
+  }
+}
+
+trait StoryTemplate extends StoryKey {
+  def template(data: Seq[xml.Node]): xml.Node
+}
+
+object DefaultTemplate extends StoryTemplate with FileOutput {
+  val key = "default"
+  val output = "converted"
+
+  def resources = List(
+    "assests/slides.js", 
+    "assests/prettify.js", 
+    "assests/styles.css"
+  )
+
+  def template(articles: Seq[xml.Node]) = {
     <html>
       <head>
         <title>Presentation</title>
@@ -158,7 +189,7 @@ object Output {
       </head>
       <body style="display: none">
         <section class="slides layout-regular template-default">
-          {contents.map (article =>
+          {articles.map (article =>
             <article>
               {article}
             </article>
@@ -166,21 +197,5 @@ object Output {
         </section>
       </body>
     </html>
-  }
-
-  def apply(converted: Seq[xml.Node]) = {
-    val resources = List(
-      "assests/slides.js", 
-      "assests/prettify.js", 
-      "assests/styles.css"
-    )
-
-    resources foreach (res => copy(resource(res), outsource(res)))
- 
-    val tpl = "<!DOCTYPE>\n" + toArticles(converted).toString 
- 
-    val writer = new FileWriter(output + "/index.html")
-    writer.write(tpl)
-    writer.close
   }
 }
