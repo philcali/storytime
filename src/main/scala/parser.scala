@@ -100,13 +100,14 @@ trait StoryPreprocessor extends StoryKey {
   def process(contents: String): String
 }
 
-object Slides extends StoryPreprocessor {
-  val key = "slide"
+object Pages extends StoryPreprocessor {
+  val key = "page"
   
   def create(contents: String) = reg.split(contents)
   def process(contents: String) = reg.replaceAllIn(contents, "")
 }
 
+// TODO: create Meta
 object Converter extends StoryDiscounter {
   def apply(mdLocation: String) = {
     val contents = open(mdLocation).getLines.mkString("\n")
@@ -116,9 +117,9 @@ object Converter extends StoryDiscounter {
         pre.process(in)
       }
 
-    val slides = Slides create preprocessed map (knockoff(_)) 
+    val pages = Pages create preprocessed map (knockoff(_)) 
 
-    slides map (toXHTML(_))
+    pages map (toXHTML(_))
   }
 }
 
@@ -169,6 +170,7 @@ trait StoryTemplate extends StoryKey {
   def template(data: Seq[xml.Node]): xml.Node
 }
 
+// TODO: create a Resource module for dynamic resources
 object DefaultTemplate extends StoryTemplate with FileOutput {
   val key = "default"
   val output = "converted"
@@ -182,7 +184,7 @@ object DefaultTemplate extends StoryTemplate with FileOutput {
   def template(articles: Seq[xml.Node]) = {
     <html>
       <head>
-        <title>Presentation</title>
+        <title>StoryBoard</title>
 
         <meta charset="utf-8"/>
         <script type="text/javascript" src="assests/slides.js"></script>
