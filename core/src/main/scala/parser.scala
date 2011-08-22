@@ -12,8 +12,8 @@ trait StoryDiscounter extends FencedDiscounter {
 
   override def blockToXHTML: Block => xml.Node = block => block match {
     case StoryBlock(key, children, _) => 
-      StoryMode.handlers.find(_.key == key)
-                        .getOrElse(UndefinedHandler).handle(this, children)
+      StoryMode.macros.find(_.key == key)
+                      .getOrElse(UndefinedHandler).handle(this, children)
     case _ => super.blockToXHTML(block)
   }
 }
@@ -47,11 +47,22 @@ case class StoryChunk(key: String, content: String) extends Chunk {
 }
 
 object StoryMode {
+  val meta = collection.mutable.HashMap[String, Any]()
+
   val preprocessors = collection.mutable.ListBuffer[StoryPreprocessor]()
 
   // Default Macros
-  val handlers = collection.mutable.ListBuffer[StoryHandler]()
+  val macros = collection.mutable.ListBuffer[StoryHandler]()
 
+  // meta ++= Seq (
+  //   "pagination" -> "true"
+  // )
+
+  // macros += macro("cool-dude") { (dis, blocks) => 
+  //    <div class="cool-dude">
+  //      dis.toXHTML(blocks)
+  //    </div>
+  // }
   def macro(k: String)(handler: (Discounter, Seq[Block]) => xml.Node) = {
     new StoryHandler {
       val key = k
@@ -61,6 +72,9 @@ object StoryMode {
     }
   }
 
+  // preprocessors += preprocessor("boilerplate") { _ =>
+  //    "My name is Philip Cali"
+  // }
   def preprocessor(k: String)(pro: (String) => String) = {
     new StoryPreprocessor {
       val key = k
@@ -68,13 +82,6 @@ object StoryMode {
       def preprocess(contents: String) = pro(contents)
     }
   }
-}
-
-object UndefinedHandler extends StoryHandler {
-  val key = "undefined"
-  
-  def handle(discounter: Discounter, blocks: Seq[Block]) = 
-    discounter.toXHTML(blocks)
 }
 
 class BuildHandler extends StoryHandler {
@@ -97,27 +104,12 @@ class BuildHandler extends StoryHandler {
   } 
 }
 
-trait StoryHandler extends StoryKey {
-  def handle(dicounter: Discounter, blocks: Seq[Block]): xml.Node
-}
-
 case class StoryBlock (
   val key: String,
   val blocks: Seq[Block],
   val position: Position
 ) extends Block with StoryKey
 
-trait StoryKey {
-  val key: String
-}
-
-trait StoryPreprocessor extends StoryKey {
-  lazy val reg = ("""\[!\s?""" + key + """\s?\]""").r
-
-  def preprocess(contents: String): String
-  def process(contents: String) = 
-    reg.replaceAllIn(contents, preprocess(contents))
-}
 
 object Pages extends StoryPreprocessor {
   val key = "page"
@@ -183,10 +175,6 @@ trait HtmlOutput extends StoryTemplate {
   def apply(converted: Seq[xml.Node]) = {
     "<!DOCTYPE>\n" + template(converted).toString 
   }
-}
-
-trait StoryTemplate extends StoryKey {
-  def template(data: Seq[xml.Node]): xml.Node
 }
 
 // TODO: create a Resource module for dynamic resources
