@@ -1,22 +1,33 @@
 package storytime
 
 import scala.io.Source.{fromFile => open}
+import com.tristanhunt.knockoff.{Block}
 
-// TODO: create Meta
-object Converter extends StoryDiscounter {
-  def apply(mdLocation: String) = {
+object Converter {
+  def apply(mode: StoryMode) = new Converter(mode)
+}
+
+class Converter private (val mode: StoryMode) extends StoryDiscounter {
+
+  def convert(mdLocation: String) = {
     val contents = open(mdLocation).getLines.mkString("\n")
 
     val preprocessed = 
-      StoryMode.preprocessors.foldLeft(contents) { (in, pre) =>
+      mode.preprocessors.foldLeft(contents) { (in, pre) =>
         pre.process(in)
       }
 
     val pages = Pages create preprocessed map (knockoff(_)) 
 
-    pages map (toXHTML(_))
+    StoryBook(mode, pages.map(toPage)) 
+  }
+
+  private def toPage(blocks: Seq[Block]) = {
+    new StoryPage(blocks, toXHTML(blocks))
   }
 }
+
+case class StoryBook(mode: StoryMode, pages: Seq[StoryPage])
 
 object Pages extends StoryPreprocessor {
   val key = "page"

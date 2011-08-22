@@ -4,14 +4,22 @@ import com.tristanhunt.knockoff._
 import pamflet.{ FencedDiscounter, FencedChunkParser}
 import util.parsing.input.{ Position }
 
+class StoryPage (blocks: Seq[Block], val contents: xml.Node) {
+  lazy val title = {
+    blocks.find(_.isInstanceOf[Header]).map(_.toString).getOrElse("")
+  }
+}
+
 trait StoryDiscounter extends FencedDiscounter {
+  val mode: StoryMode
+
   override def newChunkParser = 
     new ChunkParser with StoryChunkParser
 
   override def blockToXHTML: Block => xml.Node = block => block match {
     case StoryBlock(key, children, _) => 
-      StoryMode.macros.find(_.key == key)
-                      .getOrElse(UndefinedHandler).handle(this, children)
+      mode.macros.find(_.key == key)
+                 .getOrElse(UndefinedHandler).handle(this, children)
     case _ => super.blockToXHTML(block)
   }
 }

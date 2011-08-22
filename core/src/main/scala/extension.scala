@@ -22,6 +22,11 @@ trait StoryTemplate extends StoryKey {
   def template(data: Seq[xml.Node]): xml.Node
 }
 
+trait StoryBoard extends StoryKey {
+  // Override for setting values in templates
+  def story(): StoryMode
+}
+
 object UndefinedHandler extends StoryHandler {
   val key = "undefined"
   
