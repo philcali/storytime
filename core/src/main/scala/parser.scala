@@ -50,7 +50,24 @@ object StoryMode {
   val preprocessors = collection.mutable.ListBuffer[StoryPreprocessor]()
 
   // Default Macros
-  val handlers = collection.mutable.ListBuffer[StoryHandler](new BuildHandler)
+  val handlers = collection.mutable.ListBuffer[StoryHandler]()
+
+  def macro(k: String)(handler: (Discounter, Seq[Block]) => xml.Node) = {
+    new StoryHandler {
+      val key = k
+
+      def handle(discounter: Discounter, blocks: Seq[Block]) = 
+        handler(discounter, blocks)
+    }
+  }
+
+  def preprocessor(k: String)(pro: (String) => String) = {
+    new StoryPreprocessor {
+      val key = k
+
+      def preprocess(contents: String) = pro(contents)
+    }
+  }
 }
 
 object UndefinedHandler extends StoryHandler {
@@ -97,14 +114,16 @@ trait StoryKey {
 trait StoryPreprocessor extends StoryKey {
   lazy val reg = ("""\[!\s?""" + key + """\s?\]""").r
 
-  def process(contents: String): String
+  def preprocess(contents: String): String
+  def process(contents: String) = 
+    reg.replaceAllIn(contents, preprocess(contents))
 }
 
 object Pages extends StoryPreprocessor {
   val key = "page"
   
   def create(contents: String) = reg.split(contents)
-  def process(contents: String) = reg.replaceAllIn(contents, "")
+  def preprocess(contents: String) = ""
 }
 
 // TODO: create Meta
