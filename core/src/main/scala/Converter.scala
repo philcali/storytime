@@ -17,21 +17,36 @@ class Converter private (val mode: StoryMode) extends StoryDiscounter {
         pre.process(in)
       }
 
-    val pages = Pages create preprocessed map (knockoff(_)) 
+    val splitter = mode.meta.get("sep").map { sep =>
+      val sepstr = sep.toString
 
-    StoryBook(mode, pages.map(toPage)) 
+      new StoryPreprocessor with Separator {
+        val key = sepstr
+        def create(contents: String) = contents.split(sepstr)
+      }
+    } getOrElse Pages
+
+    val pages = splitter create preprocessed map (knockoff(_)) 
+
+    StoryBook(mode, pages.zipWithIndex.map { 
+      case (ps, n) => toPage(ps, n)
+    }) 
   }
 
-  private def toPage(blocks: Seq[Block]) = {
-    new StoryPage(blocks, toXHTML(blocks))
+  private def toPage(blocks: Seq[Block], number: Int) = {
+    new StoryPage(blocks, toXHTML(blocks), number + 1)
   }
 }
 
 case class StoryBook(mode: StoryMode, pages: Seq[StoryPage])
 
-object Pages extends StoryPreprocessor {
+trait Separator extends StoryPreprocessor {
+  def create (contents: String): Array[String]
+  def preprocess (contents: String) = ""
+}
+
+object Pages extends StoryPreprocessor with Separator {
   val key = "page"
   
   def create(contents: String) = reg.split(contents)
-  def preprocess(contents: String) = ""
 }
