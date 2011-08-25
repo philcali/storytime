@@ -21,10 +21,8 @@ object StoryMode {
   }
 }
 
-trait StoryMode {
-  val meta: Map[String, Any]
-
-  val macros: Seq[StoryHandler]
-
-  val preprocessors: Seq[StoryPreprocessor]
-}
+case class StoryMode (
+  meta: Map[String, Any] = Map[String, Any](),
+  macros: Seq[StoryHandler] = Nil,
+  preprocessors: Seq[StoryPreprocessor] = Nil
+)
