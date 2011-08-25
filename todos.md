@@ -1,8 +1,5 @@
 # Project TODO's
 
-  * Generate Meta object with meta props
-    * pagination
-    * custom sep
   * Define interface for injecting *convert* macros
     * these also include preprocessors
     * thinking along these lines:
@@ -20,3 +17,10 @@ handlers += macro("cool-dude") { (dis, blocks) =>
   </div>
 }
 ```
+
+## Design TODO's
+
+Template logic's versus Output processor's
+
+The idea being, each defined template is passed in TemplateData, which contains
+the dynamic compiled content
