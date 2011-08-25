@@ -4,10 +4,8 @@ import com.tristanhunt.knockoff._
 import pamflet.{ FencedDiscounter, FencedChunkParser}
 import util.parsing.input.{ Position }
 
-class StoryPage (blocks: Seq[Block], val contents: xml.Node) {
-  lazy val title = {
-    blocks.find(_.isInstanceOf[Header]).map(_.toString).getOrElse("")
-  }
+class StoryPage (blocks: Seq[Block], val contents: xml.Node, val number: Int) {
+  lazy val title = blocks.find(_.isInstanceOf[Header]).map(_.toString)
 }
 
 trait StoryDiscounter extends FencedDiscounter {
