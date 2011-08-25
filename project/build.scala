@@ -13,7 +13,15 @@ object StoryBuild extends Build {
     "storytime-core",
     file("core"),
     settings = generalSettings ++ Seq (
-      libraryDependencies += "net.databinder" %% "pamflet-knockoff" % "0.2.5"
+      libraryDependencies <++= (scalaVersion) { sv => Seq (
+        "net.databinder" %% "pamflet-knockoff" % "0.2.5",
+        (sv match {
+          case v if v.contains("2.8") =>
+            "org.scalatest" % "scalatest" % "1.3" % "test"
+          case _ =>
+            "org.scalatest" %% "scalatest" % "1.6.1" % "test"
+        })
+      ) }
     )
   )
 
