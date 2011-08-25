@@ -1,6 +1,6 @@
 package storytime
 
-trait FileOutput extends HtmlOutput {
+trait FileOutput {
   import java.io._
   
   val output: String
@@ -19,54 +19,44 @@ trait FileOutput extends HtmlOutput {
     }
   }
 
-  override def apply(converted: Seq[xml.Node]) = {
-    resources foreach (res => copy(resource(res), outsource(res)))
-   
-    val result = super.apply(converted)
- 
-    val writer = new FileWriter(output + "/index.html")
-    writer.write(result)
-    writer.close
-
-    "Success"
-  }
 }
 
-trait HtmlOutput extends StoryTemplate {
-  def resources: List[String]
-
-  def resource(name: String) = 
-    this.getClass.getClassLoader.getResourceAsStream(key + "/" + name)
-
-  def apply(converted: Seq[xml.Node]) = {
-    "<!DOCTYPE>\n" + template(converted).toString 
-  }
-}
-
-// TODO: create a Resource module for dynamic resources
-object DefaultTemplate extends StoryTemplate with FileOutput {
+object DefaultTemplate extends StoryTemplate {
   val key = "default"
-  val output = "converted"
 
-  def resources = List(
+  def story() = StoryMode (
+    meta = Map (
+      "paginate" -> false,
+      "resources" -> Seq (
+        "assests/slides.js", 
+        "assests/prettify.js", 
+        "assests/styles.css"
+      ),
+      "output" -> "converted"
+    ),
+    
+    macros = Seq(new BuildHandler)
+  )
+
+  override def resources = List(
     "assests/slides.js", 
     "assests/prettify.js", 
     "assests/styles.css"
   )
 
-  def template(articles: Seq[xml.Node]) = {
+  def template(data: TemplateData) = {
     <html>
       <head>
-        <title>StoryBoard</title>
+        <title>{ data.title }</title>
 
         <meta charset="utf-8"/>
         <script type="text/javascript" src="assests/slides.js"></script>
       </head>
       <body style="display: none">
         <section class="slides layout-regular template-default">
-          {articles.map (article =>
+          {data.pages.map (page =>
             <article>
-              {article}
+              {page}
             </article>
           )}
         </section>
