@@ -1,11 +1,14 @@
 package storytime
 
 import com.tristanhunt.knockoff._
+import DefaultDiscounter.{ toText }
 import pamflet.{ FencedDiscounter, FencedChunkParser}
 import util.parsing.input.{ Position }
 
 class StoryPage (blocks: Seq[Block], val contents: xml.Node, val number: Int) {
-  lazy val title = blocks.find(_.isInstanceOf[Header]).map(_.toString)
+  lazy val title = {
+    blocks.find(_.isInstanceOf[Header]).map(h => toText(Seq(h)).trim)
+  }
 }
 
 trait StoryDiscounter extends FencedDiscounter {

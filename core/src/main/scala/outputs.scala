@@ -38,12 +38,6 @@ object DefaultTemplate extends StoryTemplate {
     macros = Seq(new BuildHandler)
   )
 
-  override def resources = List(
-    "assests/slides.js", 
-    "assests/prettify.js", 
-    "assests/styles.css"
-  )
-
   def template(data: TemplateData) = {
     <html>
       <head>

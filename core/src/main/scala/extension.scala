@@ -23,8 +23,6 @@ trait StoryTemplate extends StoryKey with StoryBoard {
 
   case class StoryArgument(name: String, description: String = "")
 
-  def resources: Seq[String] = Nil
-
   def resource(name: String) = { 
     this.getClass.getClassLoader.getResourceAsStream(key + "/" + name)  
   }
