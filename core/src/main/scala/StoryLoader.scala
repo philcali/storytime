@@ -43,7 +43,19 @@ object StoryLoader {
   def loadTemplate(templateName: String) = {
     listTemplates.map {
       _.find(_.getName == templateName)
-    }
+    } 
   }
 
+  def loadMode(tname: String) = {
+    val fullPackage = "storytime.%s.%sTemplate".format(tname, tname.capitalize) 
+ 
+    try {
+      val templateClazz = Class.forName(fullPackage)
+      val story = templateClazz.getDeclaredMethod("story")
+
+      Some(story.invoke(null).asInstanceOf[StoryMode]) 
+    } catch {
+      case e: Exception => None
+    }
+  }
 }
