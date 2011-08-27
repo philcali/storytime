@@ -9,9 +9,13 @@ object Converter {
 
 class Converter private (val mode: StoryMode) extends StoryDiscounter {
 
-  def convert(mdLocation: String) = {
+  def FromFile(mdLocation: String) = {
     val contents = open(mdLocation).getLines.mkString("\n")
 
+    convert(contents)
+  }
+
+  def convert(contents: String) = {
     val preprocessed = 
       mode.preprocessors.foldLeft(contents) { (in, pre) =>
         pre.process(in)
