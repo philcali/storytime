@@ -10,8 +10,12 @@ object StoryLoader {
   lazy val configLocation = 
     createIfNotExists(System.getProperty("user.home"), ".storytime")
 
+  private def loader = {
+    this.getClass.getClassLoader.asInstanceOf[URLClassLoader]
+  }
+
   private def addURL(url: URL) {
-    val classLoader = this.getClass.getClassLoader.asInstanceOf[URLClassLoader]
+    val classLoader = loader
     val clazz = classOf[URLClassLoader]
 
     val method = clazz.getDeclaredMethod("addURL", classOf[URL])
@@ -30,6 +34,8 @@ object StoryLoader {
 
     dir
   }
+
+  def loadedJars = loader.getURLs
 
   def listTemplates() = {
     val folders = (folder: File) =>

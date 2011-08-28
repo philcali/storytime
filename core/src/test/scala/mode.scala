@@ -52,7 +52,7 @@ object TestTemplate extends StoryTemplate {
   }
 }
 
-class ModeTest extends FlatSpec with ShouldMatchers {
+class StoryTest extends FlatSpec with ShouldMatchers {
   val testMarkdown =
 """
 # Welcome
@@ -84,4 +84,5 @@ It might even be stuff wrapped in a test div!
   "StoryLoader" should "find the Test template" in {
     TestTemplate.story.meta should be === StoryLoader.loadMode("test").get.meta
   }
+
 }
