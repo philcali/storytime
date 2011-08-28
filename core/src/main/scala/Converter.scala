@@ -21,12 +21,10 @@ class Converter private (val mode: StoryMode) extends StoryDiscounter {
         pre.process(in)
       }
 
-    val splitter = mode.meta.get("sep").map { sep =>
-      val sepstr = sep.toString
-
+    val splitter = mode.meta.get[String]("separator").map { sep =>
       new StoryPreprocessor with Separator {
-        val key = sepstr
-        def create(contents: String) = contents.split(sepstr)
+        val key = sep 
+        def create(contents: String) = contents.split(sep)
       }
     } getOrElse Pages
 

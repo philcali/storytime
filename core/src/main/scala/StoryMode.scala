@@ -22,7 +22,7 @@ object StoryMode {
 }
 
 case class StoryMode (
-  meta: Map[String, Any] = Map[String, Any](),
+  meta: StoryKeys = StoryKeys(Nil),
   macros: Seq[StoryHandler] = Nil,
   preprocessors: Seq[StoryPreprocessor] = Nil
 )

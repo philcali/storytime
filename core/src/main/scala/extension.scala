@@ -21,38 +21,47 @@ trait StoryHandler extends StoryKey {
 
 trait StoryTemplate extends StoryKey with StoryBoard {
 
-  case class StoryArgument(name: String, description: String = "")
+  val paginate = StoryMetaKey[Boolean]("paginate", 
+    "Splits up a project into multiple files")
+
+  val embed = StoryMetaKey[Boolean]("embed", 
+    "Tries to embed resources into converted output")
+  
+  val separator = StoryMetaKey[String]("separator", 
+    "This is used to determine the page separators")
+
+  val title = StoryMetaKey[String]("title", "Title of the book")
+
+  val resources = StoryMetaKey[Seq[String]]("resources", 
+    "Relative or absolute path(s) to conversion assests")
+
+  val output = StoryMetaKey[String]("output", 
+    "Relative or absolute path to an output folder.")
+
+  val templates = StoryMetaKey[Seq[String]]("templates", 
+    "Load template macros and processors in scope")
 
   def resource(name: String) = { 
     this.getClass.getClassLoader.getResourceAsStream(key + "/" + name)  
   }
-
-  def arguments = Seq (
-    StoryArgument("paginate", "Splits up a project into multiple files"),
-    StoryArgument("embed", "Tries to embed resources into converted output"),
-    StoryArgument("sep", "This is used to determine the page separators"),
-    StoryArgument("title", "Title of the book"),
-    StoryArgument("resources", "Relative or absolute path(s) to conversion assests"),
-    StoryArgument("output", "Relative or absolute path to an output folder."),
-    StoryArgument("templates", "Load template macros and processors in scope")
-  )
 
   def template(data: TemplateData): xml.Node
 
   def apply(book: StoryBook) = {
     val meta = book.mode.meta
 
-    val pagination = meta.getOrElse("paginate", "false").toString.toBoolean
-    val embed = meta.getOrElse("embed", "false").toString.toBoolean
+    val pagination: Boolean = meta.getOrElse("paginate", false)
+    val embeded: Boolean = meta.getOrElse("embed", false)
 
-    val title = meta.getOrElse("title", "Storytime").toString
-    val loc = meta.getOrElse("output", "converted").toString
+    val titled: String = meta.getOrElse("title", "Storytime")
+    val loc: String = meta.getOrElse("output", "converted")
 
-    val res = meta.getOrElse("resources", List()).asInstanceOf[List[String]].map{f => 
-      new File(f.toString)
+    // TODO: Incorporate regexes
+    val res = meta.getOrElse[Seq[String]]("resources", List()).map{ f => 
+      new File(f)
     }
 
-    val data = TemplateData(meta, res, _: Seq[StoryPage], title, embed)
+    val data = TemplateData(meta, res, _: Seq[StoryPage], titled, embeded)
 
     if (pagination) {
       book.pages.foreach { page => 
@@ -74,14 +83,14 @@ trait StoryTemplate extends StoryKey with StoryBoard {
 }
 
 case class TemplateData(
-  meta: Map[String, Any],
+  meta: StoryKeys, 
   resources: Seq[File], 
   pages: Seq[StoryPage], 
   title: String = "Storytime", 
   embed: Boolean = false
 )
 
-trait StoryBoard extends StoryKey {
+trait StoryBoard extends StoryKey with ImplicitKeys {
   // Override for setting values in templates
   def story(): StoryMode
 }

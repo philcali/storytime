@@ -10,9 +10,9 @@ object TestTemplate extends StoryTemplate {
   val key = "test"
 
   def story() = StoryMode (
-    meta = Map(
-      "paginate" -> false,
-      "embed" -> false
+    meta = Seq(
+      paginate := false,
+      embed := false
     ),
 
     macros = Seq (
@@ -35,8 +35,8 @@ object TestTemplate extends StoryTemplate {
       <body>
         <h1>Here is the meta</h1>
         <ul>
-          { data.meta.map { p =>
-              val (k, v) = p
+          { data.meta.inited.map { p =>
+              val (k, v) = (p.meta.key, p.value)
               <li><strong>{k}</strong>: {v.toString} </li>
           }}
         </ul>

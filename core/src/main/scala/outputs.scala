@@ -25,16 +25,16 @@ object DefaultTemplate extends StoryTemplate {
   val key = "default"
 
   def story() = StoryMode (
-    meta = Map (
-      "paginate" -> false,
-      "resources" -> Seq (
+    meta = Seq(
+      paginate := false,
+      resources := Seq(
         "assests/slides.js", 
         "assests/prettify.js", 
         "assests/styles.css"
       ),
-      "output" -> "converted"
+      output := "converted"
     ),
-    
+ 
     macros = Seq(new BuildHandler)
   )
 
