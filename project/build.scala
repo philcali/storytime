@@ -29,9 +29,10 @@ object StoryBuild extends Build {
     "storytime-app",
     file("app"),
     settings = generalSettings ++ Seq (
-      libraryDependencies <+= (sbtVersion) {
-        "org.scala-tools.sbt" % "launcher-interface_2.8.1" % _ % "provided"
-      }
+      libraryDependencies <++= (sbtVersion) { sv => Seq (
+        "org.scala-tools.sbt" % "launcher-interface_2.8.1" % sv % "provided",
+        "net.databinder" %% "dispatch-http" % "0.8.5"
+      ) }
     )
   ) dependsOn core
 

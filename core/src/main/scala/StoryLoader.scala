@@ -53,8 +53,8 @@ object StoryLoader {
   }
 
   def loadMode(tname: String) = {
-    val fullPackage = "storytime.%s.%sTemplate".format(tname, tname.capitalize) 
- 
+    val fullPackage = templateClassName(tname)
+
     try {
       val templateClazz = Class.forName(fullPackage)
       val story = templateClazz.getDeclaredMethod("story")
@@ -64,4 +64,8 @@ object StoryLoader {
       case e: Exception => None
     }
   }
+
+  private def templateClassName(tname: String) =  
+    "storytime.%s.%sTemplate".format(tname, tname.capitalize) 
+
 }

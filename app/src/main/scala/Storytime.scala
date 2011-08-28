@@ -20,31 +20,37 @@ object Storytime {
         General options:
           
           -h: prints this help
-          -l: list commands
           -r: recursively"""
     )
   }
 
   def main (args: Array[String]) {
     if (args.contains("-h") || args.length == 0) printHelp()
-    else if (args.contains("-l")) {
-      StoryLoader.listTemplates match {
-        case Some(templates) =>
-          templates.foreach(f => println(f.getName))
-        case None => println("No templates installed.")
-      }
-    } else {
+    else { 
       val recursively = args.contains("-r")
 
       val (options, rest) = args.partition(_.startsWith("-"))
 
-      StoryLoader.loadedJars.foreach(println)
-
-      rest match { 
-        case Array(template, markdown) => 
-        case Array(markdown) => 
-        case _ => println("Provide a template and a markdown file")
-      }
+      rest match {
+        case Array(singleInput) => singleInput match {
+          case "list-templates" => 
+            StoryLoader.listTemplates match {
+              case Some(templates) =>
+                templates.foreach(f => println(f.getName))
+              case None => println("No templates installed.")
+            }
+          case "clear-templates" =>
+            def delete(f: java.io.File) {
+              if (f.isDirectory) {
+                f.listFiles.filter(!_.getName.startsWith(".")).foreach(delete)
+              }
+              f.delete
+            }
+            delete(StoryLoader.templateLocation)
+          case "template-args" =>
+            
+        }
+      }      
     }
   }
 }
