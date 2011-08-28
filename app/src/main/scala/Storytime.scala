@@ -38,9 +38,11 @@ object Storytime {
 
       val (options, rest) = args.partition(_.startsWith("-"))
 
+      StoryLoader.loadedJars.foreach(println)
+
       rest match { 
-        case Array(template, markdown) => DefaultTemplate(Converter(markdown))
-        case Array(markdown) => DefaultTemplate(Converter(markdown)) 
+        case Array(template, markdown) => 
+        case Array(markdown) => 
         case _ => println("Provide a template and a markdown file")
       }
     }
