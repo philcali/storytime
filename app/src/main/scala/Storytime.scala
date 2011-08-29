@@ -34,11 +34,9 @@ object Storytime {
       rest match {
         case Array(singleInput) => singleInput match {
           case "list-templates" => 
-            StoryLoader.listTemplates match {
-              case Some(templates) =>
-                templates.foreach(f => println(f.getName))
-              case None => println("No templates installed.")
-            }
+            StoryLoader.listTemplates.fold(println, _.foreach { f => 
+              println(f.getName)
+            })
           case "clear-templates" =>
             def delete(f: java.io.File) {
               if (f.isDirectory) {
@@ -46,9 +44,27 @@ object Storytime {
               }
               f.delete
             }
+            println("Clearing templates...")
             delete(StoryLoader.templateLocation)
+          case _ => 
+        }
+        case Array(firstInput, secondInput) => firstInput match {
           case "template-args" =>
-            
+            StoryLoader.loadTemplate(secondInput).fold(println, {
+              _.arguments.foreach { arg =>
+                println("  %s: %s".format(arg.key, arg.description))        
+              }
+            })
+          case "install" =>
+          case "uninstall" =>  
+          case _ => 
+            StoryLoader.loadTemplate(firstInput).fold(println, { template =>
+              val converter = Converter(template.mode)
+              
+              val book = converter.convert(secondInput)
+
+              template(book)
+            })
         }
       }      
     }

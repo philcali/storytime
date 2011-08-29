@@ -82,7 +82,9 @@ It might even be stuff wrapped in a test div!
   }
 
   "StoryLoader" should "find the Test template" in {
-    TestTemplate.story.meta should be === StoryLoader.loadMode("test").get.meta
+    val clazz = StoryLoader.loadClass("test").get
+
+    TestTemplate.story.meta should be === clazz.mode.meta 
   }
 
 }
