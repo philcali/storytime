@@ -8,6 +8,20 @@ import StoryKeys._
 
 class TemplateTest extends FlatSpec with ShouldMatchers with BeforeAndAfterAll {
 
+  override def afterAll(config: Map[String, Any]) {
+    import java.io.File
+
+    def recurse(dir: File) {
+      if (dir.isDirectory) {
+        dir.listFiles.filter(!_.getName.startsWith(".")).foreach(recurse)
+      }
+
+      dir.delete
+    }
+
+    recurse(new File("converted"))
+  }
+
   val markdown =
 """
 # Story time
@@ -60,23 +74,22 @@ Philip Cali
     val template = StoryLoader.loadClass("default").get
 
     val oldmode = template.mode
-    val mode = oldmode.copy(meta = oldmode.meta.inited ++ Seq(
+    val mode = oldmode ++ Seq(
       separator := "---",
-      paginate := true
-    ), macros = oldmode.macros ++ Seq(
+      macros ++= Seq(
+        textMacro("quote") { rest =>
+          <q>
+            { rest }
+          </q>
+        },
 
-      textMacro("quote") { rest =>
-        <q>
-          { rest }
-        </q>
-      },
-
-      textMacro("author") { rest =>
-        <div class="author">
-          { rest } 
-        </div>
-      }
-    ))
+        textMacro("author") { rest =>
+          <div class="author">
+            { rest } 
+          </div>
+        }
+      )
+    )
 
     template(Converter(mode).convert(markdown))
 

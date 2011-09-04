@@ -78,17 +78,17 @@ trait StoryCodeGenerator extends StoryKey {
   def generate() = {
     val (imports, source) = parseSource()
 
-    """ |package storytime
-        |package %s
-        |import StoryMode._
-        |
-        |%s
-        |
-        |object %sTemplate extends StoryBoard {
-        |  def story() = StoryMode (
-        |     %s
-        |  )
-        |}""".stripMargin.format(
+    """|package storytime
+       |package %s
+       |import StoryMode._
+       |
+       |%s
+       |
+       |object %sTemplate extends StoryBoard {
+       |  def story() = StoryMode (
+       |     %s
+       |  )
+       |}""".stripMargin.format(
         key, imports, key.capitalize, source
       )
   }

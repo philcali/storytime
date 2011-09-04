@@ -41,6 +41,8 @@ object StoryMode {
 }
 
 case class StoryMode(meta: Seq[Meta[_]]) {
+  lazy val keys = meta.map(_.meta)
+
   def get[A](key: StoryMetaKey[A]): Option[A] = get(key.key)
 
   def get[A](key: String): Option[A] = 
@@ -52,6 +54,22 @@ case class StoryMode(meta: Seq[Meta[_]]) {
   def getOrElse[A](key: String, default: A): A =
     get[A](key).getOrElse(default)
 
-  def ++ (otherSettings: Seq[Meta[_]]) = {
+  def ++ (otherSettings: Seq[Meta[_]]): StoryMode = {
+
+    val adjusted = otherSettings.map {
+      case m: OverwriteMeta[_] => m
+      case m: AddSeqMeta[_] =>
+        m.process(this.getOrElse(m.meta, Nil))
+    }
+
+    val adjustedKeys = adjusted.map(_.meta)
+
+    val diff = keys diff adjustedKeys
+
+    val originalMeta = diff.map(m => meta.find(_.meta == m).get)
+
+    StoryMode(originalMeta ++ adjusted)
   }
+
+  def ++ (otherMode: StoryMode): StoryMode = ++ (otherMode.meta)
 }

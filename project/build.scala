@@ -6,6 +6,7 @@ object StoryBuild extends Build {
   // Right now we're the same
   def generalSettings = Defaults.defaultSettings ++ Seq (
     organization := "com.github.philcali",
+    scalacOptions += "-unchecked",
     version := "0.0.1"
   ) 
 

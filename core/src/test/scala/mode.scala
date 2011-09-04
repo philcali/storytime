@@ -4,38 +4,33 @@ package test
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 
+import StoryKeys._
 import StoryMode._
 
 object TestTemplate extends StoryTemplate {
   val key = "test"
 
-  def story() = StoryMode (
-    meta = Seq(
-      paginate := false,
-      embed := false
-    ),
+  def story() = StoryMode (Seq(
+    paginate := false,
+    embed := false,
 
-    macros = Seq (
-      macro("test") { (dis, blocks) =>
-        <div class="test">
-          { dis.toXHTML(blocks) }
-        </div>
-      }
-    ),
+    macros += macro("test") { (dis, blocks) =>
+      <div class="test">
+        { dis.toXHTML(blocks) }
+      </div>
+    },
 
-    preprocessors = Seq (
-      preprocessor("boilerplate") { _ =>
-        "My name is Philip Cali"
-      }
-    )
-  )
+    preprocessors += preprocessor("boilerplate") { _ =>
+      "My name is Philip Cali"
+    }
+  ))
 
   def template(data: TemplateData) = {
     <html>
       <body>
         <h1>Here is the meta</h1>
         <ul>
-          { data.meta.inited.map { p =>
+          { data.mode.meta.map { p =>
               val (k, v) = (p.meta.key, p.value)
               <li><strong>{k}</strong>: {v.toString} </li>
           }}
@@ -84,7 +79,7 @@ It might even be stuff wrapped in a test div!
   "StoryLoader" should "find the Test template" in {
     val clazz = StoryLoader.loadClass("test").get
 
-    TestTemplate.story.meta should be === clazz.mode.meta 
+    TestTemplate.story.get(paginate) should be === clazz.mode.get(paginate)
   }
 
 }
