@@ -91,9 +91,11 @@ object StoryLoader {
     "storytime.%s.%sTemplate".format(tname, tname.capitalize) 
 }
 
-class TemplateClass(val name: String, clazz: Class[_]) {
+class TemplateClass(name: String, clazz: Class[_]) extends StoryKey {
+  val key = name
+
   def apply(book: StoryBook) {
-    val app = clazz.getDeclaredMethod("apply")
+    val app = clazz.getDeclaredMethod("apply", classOf[StoryBook])
 
     app.invoke(null, book)
   }

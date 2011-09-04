@@ -3,13 +3,15 @@ package storytime
 import scala.io.Source.{fromFile => open}
 import com.tristanhunt.knockoff.{Block}
 
+import StoryKeys.preprocessors
+
 object Converter {
   def apply(mode: StoryMode) = new Converter(mode)
 }
 
 class Converter private (val mode: StoryMode) extends StoryDiscounter {
 
-  def FromFile(mdLocation: String) = {
+  def fromFile(mdLocation: String) = {
     val contents = open(mdLocation).getLines.mkString("\n")
 
     convert(contents)
@@ -17,11 +19,11 @@ class Converter private (val mode: StoryMode) extends StoryDiscounter {
 
   def convert(contents: String) = {
     val preprocessed = 
-      mode.preprocessors.foldLeft(contents) { (in, pre) =>
+      mode.getOrElse(preprocessors, Nil).foldLeft(contents) { (in, pre) =>
         pre.process(in)
       }
 
-    val splitter = mode.meta.get[String]("separator").map { sep =>
+    val splitter = mode.get[String]("separator").map { sep =>
       new StoryPreprocessor with Separator {
         val key = sep 
         def create(contents: String) = contents.split(sep)

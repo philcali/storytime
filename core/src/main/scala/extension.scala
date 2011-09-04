@@ -1,7 +1,12 @@
 package storytime
 
 import com.tristanhunt.knockoff.{Block, Discounter}
-import java.io.File
+import java.io.{
+  File,
+  InputStream,
+  OutputStream,
+  FileOutputStream
+}
 
 trait StoryKey {
   val key: String
@@ -16,10 +21,17 @@ trait StoryPreprocessor extends StoryKey {
 }
 
 trait StoryHandler extends StoryKey {
+  def restToXml(dis: Discounter, blocks: Seq[Block]) = dis.toXHTML(blocks)
+
+  def restToText(dis: Discounter, blocks: Seq[Block]) = dis.toText(blocks)
+
   def handle(dicounter: Discounter, blocks: Seq[Block]): xml.Node
 }
 
-trait StoryTemplate extends StoryKey with StoryBoard {
+trait Keys {
+  implicit def overwriteKey[A](key: StoryMetaKey[A]) = new OverwriteKey[A](key)
+
+  implicit def addSeq[A](key: StoryMetaKey[Seq[A]]) = new AddSeq[A](key)
 
   val paginate = StoryMetaKey[Boolean]("paginate", 
     "Splits up a project into multiple files")
@@ -41,14 +53,49 @@ trait StoryTemplate extends StoryKey with StoryBoard {
   val templates = StoryMetaKey[Seq[String]]("templates", 
     "Load template macros and processors in scope")
 
-  def resource(name: String) = { 
-    this.getClass.getClassLoader.getResourceAsStream(key + "/" + name)  
+  val macros = StoryMetaKey[Seq[StoryHandler]]("macros",
+    "Defines template macros")
+
+  val preprocessors = StoryMetaKey[Seq[StoryPreprocessor]]("preprocessors",
+    "Defines template preprocessors")
+}
+
+object StoryKeys extends Keys 
+
+trait StoryTemplate extends StoryKey with StoryBoard {
+
+  def loadResource(name: String) = { 
+    val stream = this.getClass.getClassLoader.getResourceAsStream(key + "/" + name)  
+    if (stream == null) {
+      import java.io.FileInputStream
+
+      try {
+        Some(new FileInputStream(name))
+      } catch {
+        case e: java.io.FileNotFoundException => None
+      }
+    } else {
+      Some(stream)
+    }
+  }
+
+  def outsource(filename: String) = {
+    new File(filename.split("/").dropRight(1).mkString("/")).mkdirs
+    new FileOutputStream(filename)
+  }
+
+  def copy(in: InputStream, out: OutputStream) {
+    val buf = new Array[Byte](1024)
+    in read(buf, 0, 1024) match {
+      case n if n >= 0 => out.write(buf, 0, n); copy(in, out)
+      case _ => in.close; out.close
+    }
   }
 
   def template(data: TemplateData): xml.Node
 
   def apply(book: StoryBook) = {
-    val meta = book.mode.meta
+    val meta = book.mode
 
     val pagination: Boolean = meta.getOrElse("paginate", false)
     val embeded: Boolean = meta.getOrElse("embed", false)
@@ -56,24 +103,31 @@ trait StoryTemplate extends StoryKey with StoryBoard {
     val titled: String = meta.getOrElse("title", "Storytime")
     val loc: String = meta.getOrElse("output", "converted")
 
-    // TODO: Incorporate regexes
-    val res = meta.getOrElse[Seq[String]]("resources", List()).map{ f => 
-      new File(f)
+    val location = new File(loc)
+    if (!location.exists) {
+      location.mkdirs()
     }
 
-    val data = TemplateData(meta, res, _: Seq[StoryPage], titled, embeded)
+    // TODO: Incorporate regexes
+    val res = meta.getOrElse[Seq[String]]("resources", Nil)
+
+    res.foreach(r => loadResource(r).map { loaded =>
+      copy(loaded, outsource(loc + "/" + r))
+    })
+
+    val data = TemplateData(meta, _: Seq[StoryPage], titled, embeded)
 
     if (pagination) {
       book.pages.foreach { page => 
         val file = "%s/page%d.html".format(loc, page.number)
-        output(template(data(Seq(page))), file)
+        outputConverted(template(data(Seq(page))), file)
       }
     } else {
-      output(template(data(book.pages)), "%s/index.html".format(loc))
+      outputConverted(template(data(book.pages)), "%s/index.html".format(loc))
     }
   }
 
-  def output(converted: xml.Node, location: String) {
+  def outputConverted(converted: xml.Node, location: String) {
     val result = "<!DOCTYPE html>\n" + converted.toString 
     
     val writer = new java.io.FileWriter(location)
@@ -83,14 +137,13 @@ trait StoryTemplate extends StoryKey with StoryBoard {
 }
 
 case class TemplateData(
-  meta: StoryKeys, 
-  resources: Seq[File], 
+  meta: StoryMode, 
   pages: Seq[StoryPage], 
   title: String = "Storytime", 
   embed: Boolean = false
 )
 
-trait StoryBoard extends StoryKey with ImplicitKeys {
+trait StoryBoard extends StoryKey {
   // Override for setting values in templates
   def story(): StoryMode
 }

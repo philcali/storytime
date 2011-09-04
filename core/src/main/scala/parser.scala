@@ -5,6 +5,8 @@ import DefaultDiscounter.{ toText }
 import pamflet.{ FencedDiscounter, FencedChunkParser}
 import util.parsing.input.{ Position }
 
+import StoryKeys.macros
+
 class StoryPage (blocks: Seq[Block], val contents: xml.Node, val number: Int) {
   lazy val title = {
     blocks.find(_.isInstanceOf[Header]).map(h => toText(Seq(h)).trim)
@@ -19,8 +21,8 @@ trait StoryDiscounter extends FencedDiscounter {
 
   override def blockToXHTML: Block => xml.Node = block => block match {
     case StoryBlock(key, children, _) => 
-      mode.macros.find(_.key == key)
-                 .getOrElse(UndefinedHandler).handle(this, children)
+      mode.get(macros).get.find(_.key == key)
+                      .getOrElse(UndefinedHandler).handle(this, children)
     case _ => super.blockToXHTML(block)
   }
 }

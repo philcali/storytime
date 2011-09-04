@@ -6,12 +6,11 @@ import org.scalatest.matchers.ShouldMatchers
 
 import java.io.File
 
-class MetaTest extends FlatSpec with ShouldMatchers with ImplicitKeys {
-  val paginated = StoryMetaKey[Boolean]("paginated", required = true)
+class MetaTest extends FlatSpec with ShouldMatchers with Keys {
   val clean = StoryMetaKey[File]("clean")
 
   "Meta" should "be created fluently" in {
-    (paginated := false) should be === Meta[Boolean](paginated, false)
+    (paginate := false) should be === Meta[Boolean](paginate, false)
   }
 
   it should "obtain its value easily" in {
@@ -19,7 +18,7 @@ class MetaTest extends FlatSpec with ShouldMatchers with ImplicitKeys {
       clean := new File(".")
     )
 
-    val paging = settings.getOrElse[Boolean]("paginated", false)
+    val paging = settings.getOrElse[Boolean]("paginate", false)
 
     paging should be === false 
 

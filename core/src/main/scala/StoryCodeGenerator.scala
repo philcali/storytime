@@ -64,22 +64,32 @@ trait StoryCodeGenerator extends StoryKey {
   private def parseSource() = {
     val lines = source.split("\n")
 
-    val transformed = lines.map("    %s".format(_)).mkString("\n")
+    val Import = """^import (.+)""".r
 
-    transformed.replaceAll("\n\\s{4}\n", ",\n")
+    val (imports, sourced) = lines.partition(Import.findFirstIn(_).map(_ => true).getOrElse(false))
+
+    val pre = sourced.dropWhile(_.trim.isEmpty)
+
+    val transformed = pre.map("    %s".format(_)).mkString("\n")
+
+    (imports.mkString("\n"), transformed.replaceAll("\n\\s{4}\n", ",\n"))
   }
 
   def generate() = {
+    val (imports, source) = parseSource()
+
     """ |package storytime
         |package %s
         |import StoryMode._
+        |
+        |%s
         |
         |object %sTemplate extends StoryBoard {
         |  def story() = StoryMode (
         |     %s
         |  )
         |}""".stripMargin.format(
-        key, key.capitalize, parseSource()
+        key, imports, key.capitalize, source
       )
   }
 }

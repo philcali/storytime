@@ -4,20 +4,35 @@ case class StoryMetaKey[A](
   key: String, 
   description: String = "",
   required: Boolean = false) extends StoryKey {
-  def := (value: A) = Meta[A](this, value)
+}
+
+class OverwriteKey[A](meta: StoryMetaKey[A]) {
+  def := (value: A) = new OverwriteMeta[A](meta, value)
+}
+
+class AddSeq[A](meta: StoryMetaKey[Seq[A]]) {
+  def += (value: A) = new AddSeqMeta[A](meta, Seq(value)) 
+
+  def ++= (values: Seq[A]) = new AddSeqMeta[A](meta, values)
 }
 
 case class Meta[A](meta: StoryMetaKey[A], value: A)
 
-trait ImplicitKeys {
-  implicit def seq2StoryKeys(inited: Seq[Meta[_]]) =
-    StoryKeys(inited)
+trait MetaAction[A] {
+  def process(original: Meta[A]): Meta[A]
 }
 
-case class StoryKeys(inited: Seq[Meta[_]]) {
-  def get[A](key: String) = 
-    inited.find(_.meta.key == key).map(_.value.asInstanceOf[A])
+class OverwriteMeta[A](
+  meta: StoryMetaKey[A], 
+  value: A
+) extends Meta[A](meta, value) with MetaAction[A] {
+  def process(original: Meta[A]) = Meta[A](this.meta, this.value)
+}
 
-  def getOrElse[A](key: String, default: A) =
-    get[A](key).getOrElse(default)
+class AddSeqMeta[A](
+  meta: StoryMetaKey[Seq[A]],
+  value: Seq[A]
+) extends Meta[Seq[A]](meta: StoryMetaKey[Seq[A]], value) with MetaAction[Seq[A]] {
+  def process(original: Meta[Seq[A]]) =
+    Meta[Seq[A]](this.meta, original.value ++ this.value)
 }

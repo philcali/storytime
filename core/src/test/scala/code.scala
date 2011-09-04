@@ -11,8 +11,10 @@ class Generator extends FlatSpec with ShouldMatchers with BeforeAndAfterAll {
 
   val story = 
 """
-meta = Map(
-  "paginate" -> true
+import custom.CustomTemplate._
+
+meta = Seq(
+  paginate := true
 )
 
 macros = Seq(
