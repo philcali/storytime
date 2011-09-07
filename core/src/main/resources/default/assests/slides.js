@@ -532,7 +532,9 @@ function addPrettify() {
       el.classList.add('prettyprint');
     }
   }
-  
+
+  prettyPrint(); 
+  /* 
   var el = document.createElement('script');
   el.type = 'text/javascript';
   el.src = PERMANENT_URL_PREFIX + 'prettify.js';
@@ -540,6 +542,7 @@ function addPrettify() {
     prettyPrint();
   }
   document.body.appendChild(el);
+  */
 };
 
 function addFontStyle() {
@@ -553,12 +556,14 @@ function addFontStyle() {
 };
 
 function addGeneralStyle() {
+  /*
   var el = document.createElement('link');
   el.rel = 'stylesheet';
   el.type = 'text/css';
   el.href = PERMANENT_URL_PREFIX + 'styles.css';
   document.body.appendChild(el);
-  
+  */ 
+ 
   var el = document.createElement('meta');
   el.name = 'viewport';
   el.content = 'width=1100,height=750';

@@ -12,7 +12,10 @@ trait Keys {
 
   val embed = StoryMetaKey[Boolean]("embed", 
     "Tries to embed resources into converted output")
-  
+ 
+  val namedFile = StoryMetaKey[Boolean]("named-file",
+    "Will name the output html, the same name as the input markdown.")
+ 
   val separator = StoryMetaKey[String]("separator", 
     "This is used to determine the page separators")
 

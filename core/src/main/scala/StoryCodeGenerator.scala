@@ -85,8 +85,8 @@ trait StoryCodeGenerator extends StoryKey {
        |%s
        |
        |object %sTemplate extends StoryBoard {
-       |  def story() = StoryMode (
-       |     %s
+       |  def story() = Seq (
+       |    %s
        |  )
        |}""".stripMargin.format(
         key, imports, key.capitalize, source

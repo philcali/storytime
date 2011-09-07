@@ -21,7 +21,7 @@ trait StoryDiscounter extends FencedDiscounter {
 
   override def blockToXHTML: Block => xml.Node = block => block match {
     case StoryBlock(key, children, _) => 
-      mode.get(macros).get.find(_.key == key)
+      mode.getOrElse(macros, Nil).find(_.key == key)
                       .getOrElse(UndefinedHandler).handle(this, children)
     case _ => super.blockToXHTML(block)
   }

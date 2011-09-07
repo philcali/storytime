@@ -73,8 +73,7 @@ Philip Cali
 
     val template = StoryLoader.loadClass("default").get
 
-    val oldmode = template.mode
-    val mode = oldmode ++ Seq(
+    val mode = template.mode ++ Seq(
       separator := "---",
       macros ++= Seq(
         textMacro("quote") { rest =>
