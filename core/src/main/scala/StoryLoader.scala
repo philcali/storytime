@@ -1,7 +1,14 @@
 package storytime
 
 import java.net.{URLClassLoader, URL}
-import java.io.File
+import java.io.{
+  File,
+  OutputStream,
+  InputStream,
+  ByteArrayOutputStream,
+  FileOutputStream,
+  FileInputStream
+}
 
 object StoryLoader {
   lazy val templateLocation =
@@ -69,6 +76,46 @@ object StoryLoader {
       Some(new TemplateClass(templateName, Class.forName(fullPackage)))
     } catch {
       case _ => None
+    }
+  }
+
+  def outsource(filename: String) = {
+    new File(filename.split("/").dropRight(1).mkString("/")).mkdirs
+    new FileOutputStream(filename)
+  }
+
+  def copy(in: InputStream, out: OutputStream) {
+    val buf = new Array[Byte](1024)
+    in read(buf, 0, 1024) match {
+      case n if n >= 0 => out.write(buf, 0, n); copy(in, out)
+      case _ => in.close; out.close
+    }
+  }
+
+  def copyFile(in: InputStream, filename: String) {
+    copy(in, outsource(filename))
+  }
+
+  def copyBytes(in: InputStream) = {
+    val out = new java.io.ByteArrayOutputStream
+
+    copy(in, out)
+
+    out.toByteArray
+  }
+
+  def loadResource(key: String, name: String) = { 
+    val stream = this.getClass.getClassLoader.getResourceAsStream(key + "/" + name)  
+    if (stream == null) {
+      import java.io.FileInputStream
+
+      try {
+        Some(new FileInputStream(name))
+      } catch {
+        case e: java.io.FileNotFoundException => None
+      }
+    } else {
+      Some(stream)
     }
   }
 

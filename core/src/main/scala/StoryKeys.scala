@@ -7,6 +7,9 @@ trait Keys {
 
   implicit def metaSeqtoMode(seq: Seq[Meta[_]]) = StoryMode(seq)
 
+  val defaultTemplate = StoryMetaKey[String]("default-template",
+    "Uses this template as the default template, if none is specified.")
+
   val paginate = StoryMetaKey[Boolean]("paginate", 
     "Splits up a project into multiple files")
 

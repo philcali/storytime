@@ -81,6 +81,7 @@ trait StoryCodeGenerator extends StoryKey {
     """|package storytime
        |package %s
        |import StoryMode._
+       |import StoryKeys._
        |
        |%s
        |

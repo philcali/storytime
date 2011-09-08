@@ -16,6 +16,7 @@ object StoryBuild extends Build {
     settings = generalSettings ++ Seq (
       libraryDependencies <++= (scalaVersion) { sv => Seq (
         "net.databinder" %% "pamflet-knockoff" % "0.2.5",
+        "commons-codec" % "commons-codec" % "1.5",
         (sv match {
           case v if v.contains("2.8") =>
             "org.scalatest" % "scalatest" % "1.3" % "test"

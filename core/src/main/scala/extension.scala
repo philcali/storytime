@@ -1,13 +1,11 @@
 package storytime
 
 import com.tristanhunt.knockoff.{Block, Discounter}
-import java.io.{
-  File,
-  InputStream,
-  OutputStream,
-  ByteArrayOutputStream,
-  FileOutputStream
-}
+import java.io.File
+
+import StoryKeys._
+
+import StoryLoader.{ copyFile, copyBytes, loadResource }
 
 trait StoryKey {
   val key: String
@@ -29,114 +27,83 @@ trait StoryHandler extends StoryKey {
   def handle(dicounter: Discounter, blocks: Seq[Block]): xml.Node
 }
 
-trait StoryTemplate extends StoryKey with StoryBoard {
+trait StoryTemplate extends StoryKey with StoryBoard { parent =>
 
-  def loadResource(name: String) = { 
-    val stream = this.getClass.getClassLoader.getResourceAsStream(key + "/" + name)  
-    if (stream == null) {
-      import java.io.FileInputStream
+  case class TemplateData(mode: StoryMode, pages: Seq[StoryPage]) {
+    val title = mode.getOrElse(StoryKeys.title, "Storytime")
 
-      try {
-        Some(new FileInputStream(name))
-      } catch {
-        case e: java.io.FileNotFoundException => None
-      }
-    } else {
-      Some(stream)
-    }
-  }
+    val embedded = mode.getOrElse(embed, false)
 
-  def outsource(filename: String) = {
-    new File(filename.split("/").dropRight(1).mkString("/")).mkdirs
-    new FileOutputStream(filename)
-  }
+    val base = mode.getOrElse(output, "converted")
 
-  def copy(in: InputStream, out: OutputStream) {
-    val buf = new Array[Byte](1024)
-    in read(buf, 0, 1024) match {
-      case n if n >= 0 => out.write(buf, 0, n); copy(in, out)
-      case _ => in.close; out.close
-    }
-  }
+    def headerResources = {
+      val res = mode.getOrElse(resources, Nil)
 
-  def headerToHTML(resource: Resource) = resource match {
-    case Resource(name, mime, contents, embeded) =>
-      val stripScript = """</script>""".r
+      val mimeMap = new javax.activation.MimetypesFileTypeMap
 
-      val utf = new String(contents, "UTF8")
+      val loaded = res.map { r => 
+        // is Loadable
+        loadResource(key, r).map { in =>
 
-      mime match {
-        case "text/css" =>
-          if (embeded)
-            <style type={mime}>{xml.Unparsed(utf)}</style>
-          else
-            <link rel="stylesheet" type={mime} href={name}/>
-        case _ => 
-          if (embeded)
-            <script type={mime}>
-              {xml.Unparsed(stripScript.replaceAllIn(utf, ""))}
-            </script>
-          else
-            <script type={mime} src={name}></script>
-      }
-  }
+          val mime = if (r.endsWith("js")) 
+            "text/javascript"
+          else if (r.endsWith("css"))
+            "text/css"
+          else mimeMap.getContentType(r)
 
-  def separateResources(res: Seq[Resource]) = {
-    res.partition(_.contentType match {
-      case "text/javascript" | "text/css" => true
-      // consider all other resources (images and what not) non-header
-      case _ => false
-    })
-  }
+          val resource = Resource(r, mime, embedded)
 
-  def gatherResources(res: Seq[String], embeded: Boolean, loc: String) = {
-    val mimeMap = new javax.activation.MimetypesFileTypeMap
+          val bytes = if (embedded) {
+            Some(copyBytes(in))
+          } else {
+            copyFile(in, base + "/" + r)
+            None
+          }
 
-    val loaded = res.map { r => 
-      loadResource(r).map { in =>
-        val base = loc + "/" + r
-
-        val (out, toBytes) = if (embeded) { 
-          val bytes = new ByteArrayOutputStream 
-          (bytes, () => bytes.toByteArray)
-        } else {
-          (outsource(base), () => new Array[Byte](0))
+          headerToHTML(resource, bytes)
         }
-
-        copy(in, out)
-
-        val mime = if (r.endsWith("js")) 
-          "text/javascript"
-        else if (r.endsWith("css"))
-          "text/css"
-        else mimeMap.getContentType(r)
-
-        Resource(r, mime, toBytes(), embeded)
       }
+
+      loaded.filter(_.map(_ => true).orElse(Some(false)).get).map(_.get)
     }
 
-    loaded.filter(_.map(_ => true).orElse(Some(false)).get).map(_.get)
-  }
+    def headerToHTML(resource: Resource, contents: Option[Array[Byte]]) = resource match {
+      case Resource(name, mime, embeded) =>
+        val stripScript = """</script>""".r
 
-  def template(data: TemplateData): xml.Node
+        val utf = contents.map { new String(_, "UTF8") }
+
+        mime match {
+          case "text/css" =>
+            if (embeded)
+              <style type={mime}>{xml.Unparsed(utf.get)}</style>
+            else
+              <link rel="stylesheet" type={mime} href={name}/>
+          case _ => 
+            if (embeded)
+              <script type={mime}>
+                {xml.Unparsed(stripScript.replaceAllIn(utf.get, ""))}
+              </script>
+            else
+              <script type={mime} src={name}></script>
+        }
+    }
+  }
 
   def apply(book: StoryBook) = {
     val meta = book.mode
 
     val pagination = meta.getOrElse(paginate, false)
-    val embeded = meta.getOrElse(embed, false)
 
-    val titled = meta.getOrElse(title, "Storytime")
     val loc = meta.getOrElse(output, "converted")
 
     val location = new File(loc)
+
     if (!location.exists) {
       location.mkdirs()
     }
 
-    val res = gatherResources(meta.getOrElse(resources, Nil), embeded, loc)
-
-    val data = TemplateData(meta, _: Seq[StoryPage], titled, res)
+    val data = TemplateData(meta, _: Seq[StoryPage])
 
     if (pagination) {
       book.pages.foreach { page => 
@@ -153,27 +120,17 @@ trait StoryTemplate extends StoryKey with StoryBoard {
 
     val bytes = result.getBytes("UTF8")   
 
-    val out = new FileOutputStream(location) 
+    val out = new java.io.FileOutputStream(location) 
     out.write(bytes, 0, bytes.length)
     out.close()
   }
+
+  def template(data: TemplateData): xml.Node
 }
 
-case class Resource(
-  name: String,
-  contentType: String,
-  contents: Array[Byte],
-  embed: Boolean
-)
+case class Resource(name: String, contentType: String, embedded: Boolean)
 
-case class TemplateData(
-  mode: StoryMode,
-  pages: Seq[StoryPage],
-  title: String = "Storytime",
-  resources: Seq[Resource]
-)
-
-trait StoryBoard extends StoryKey with Keys {
+trait StoryBoard extends StoryKey {
   // Override for setting values in templates
   def story(): StoryMode
 }

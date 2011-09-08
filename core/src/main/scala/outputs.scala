@@ -18,14 +18,12 @@ object DefaultTemplate extends StoryTemplate {
   )
 
   def template(data: TemplateData) = {
-    val (headerResources, otherResources) = separateResources(data.resources)
-
     <html>
       <head>
         <title>{ data.title }</title>
 
         <meta charset="utf-8"/>
-        { headerResources.map(headerToHTML) }
+        { data.headerResources }
       </head>
       <body style="display: none">
         <section class="slides layout-regular template-default">

@@ -5,7 +5,15 @@ import DefaultDiscounter.{ toText }
 import pamflet.{ FencedDiscounter, FencedChunkParser}
 import util.parsing.input.{ Position }
 
-import StoryKeys.macros
+import StoryKeys.{ macros, embed, output, defaultTemplate }
+
+import StoryLoader.{ loadResource, copyBytes, copyFile }
+
+import org.apache.commons.codec.binary.Base64.{
+  encodeBase64
+}
+
+import java.io.File
 
 class StoryPage (blocks: Seq[Block], val contents: xml.Node, val number: Int) {
   lazy val title = {
@@ -16,6 +24,12 @@ class StoryPage (blocks: Seq[Block], val contents: xml.Node, val number: Int) {
 trait StoryDiscounter extends FencedDiscounter {
   val mode: StoryMode
 
+  lazy val embedded = mode.getOrElse(embed, false)
+
+  lazy val location = mode.getOrElse(output, "converted")
+
+  lazy val template = mode.getOrElse(defaultTemplate, "default")
+
   override def newChunkParser = 
     new ChunkParser with StoryChunkParser
 
@@ -24,6 +38,48 @@ trait StoryDiscounter extends FencedDiscounter {
       mode.getOrElse(macros, Nil).find(_.key == key)
                       .getOrElse(UndefinedHandler).handle(this, children)
     case _ => super.blockToXHTML(block)
+  }
+
+  override def imageLinkToXHTML: (Seq[Span], String, Option[String]) => xml.Node = {
+    (spans, url, title) =>
+      // Test for relativity
+      val in = loadResource(template, url)
+      
+      val outUrl = if (in.isDefined && embedded) {
+        // base 64 encode image data
+        val bytes = copyBytes(in.get)
+
+        val extension = url.substring(url.lastIndexOf("."), url.length)
+
+        val data = new String(encodeBase64(bytes), "UTF8")
+
+        "data:image/%s;base64,%s".format(extension, data)
+      } else {
+        val out = new File(location).getAbsolutePath
+        val relative = new File(".").getAbsolutePath
+ 
+        if (in.isDefined && out != relative) 
+          copyFile(in.get, location + "/" +url)
+
+        url
+      }
+
+      <img src={ outUrl } title={ title.getOrElse(null) }
+             alt={ spans.map( spanToXHTML(_) ) } ></img>
+  }
+
+  override def linkToXHTML: ( Seq[Span], String, Option[String] ) => xml.Node = {
+    (spans, url, title) =>
+      loadResource(template, url).map { in =>
+        val path = location + "/" + url
+        val file = new File(path)
+
+        if (!file.exists) copyFile(in, path)
+      }
+
+      <a href={ escapeURL(url) } title={ title.getOrElse(null) }>{
+        spans.map( spanToXHTML(_) )
+      }</a> 
   }
 }
 
