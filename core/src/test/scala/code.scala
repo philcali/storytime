@@ -11,26 +11,33 @@ class Generator extends FlatSpec with ShouldMatchers with BeforeAndAfterAll {
 
   val story = 
 """
-import custom.CustomTemplate._
+import custom._
+import CustomKeys._
 
-meta = Seq(
-  paginate := true
-)
+index := "index.html"
 
-macros = Seq(
-  macro("test") { (dis, blocks) =>
-    <div class="test">
-      { dis.toXHTML(blocks) }
-    </div>
-  }
-)
+paginate := true
+
+macros += macro("test") { (dis, blocks) =>
+  <div class="test">
+    { dis.toXHTML(blocks) }
+  </div>
+}
 """
 
   val input = new File("test.story")
 
   override def afterAll(config: Map[String, Any]) {
-    val testScala = new File(destination, "src/main/scala/TestTemplate.scala")
-    List(testScala, input) foreach (f => if (f.exists) f.delete)
+    val testFolder = new File(destination, "test")
+
+    def recurse(f: File) {
+      if (f.isDirectory)
+        f.listFiles.filter(!_.getName.startsWith(".")).foreach(recurse)
+      
+      f.delete
+    }
+
+    List(testFolder, input) foreach (recurse)
   }
 
   "Test generator" should "generate the correct source" in {
@@ -39,9 +46,9 @@ macros = Seq(
       val source = story 
     }
 
-    val source = generator.generate()
+    val template = generator.generate()
 
-    source.contains("TestTemplate") should be === true
+    template.source.contains("TestTemplate") should be === true
   }
 
   "File Reader" should "generate source from a file" in {
@@ -56,9 +63,9 @@ macros = Seq(
       val file = input
     }
 
-    val source = testgenerator.generate()
+    val template = testgenerator.generate()
 
-    source.contains("TestTemplate") should be === true
+    template.source.contains("TestTemplate") should be === true
   }
 
   "File Writer" should "generate a file from a source" in {
@@ -70,6 +77,14 @@ macros = Seq(
 
     generator.write()
 
-    new File(destination, "/src/main/scala/TestTemplate.scala") should be ('exists)
+    new File(destination, "test/src/main/scala/TestTemplate.scala") should be ('exists)
+  }
+
+  "A SBT template" should "find the project refs" in {
+    val imports = List("import custom._", "import CustomKeys._")
+
+    val template = sbtTemplate(imports, story)
+
+    template.dependencies should be === List("custom", "CustomKeys")
   }
 }
