@@ -46,7 +46,7 @@ object Storytime {
             }
             println("Clearing templates...")
             delete(StoryLoader.templateLocation)
-          case _ => 
+          case _ =>
         }
         case Array(firstInput, secondInput) => firstInput match {
           case "template-args" =>
@@ -61,13 +61,17 @@ object Storytime {
             StoryLoader.loadTemplate(firstInput).fold(println, { template =>
               val converter = Converter(template.mode)
               
-              val book = converter.convert(secondInput)
+              val book = converter.fromFile(secondInput)
 
               template(book)
             })
         }
-      }      
+      } 
     }
+  }
+
+  def runStory(recurse: Boolean, md: String, template: String, args: Array[String]) {
+    
   }
 }
 

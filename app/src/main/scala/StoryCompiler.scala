@@ -1,0 +1,3 @@
+package storytime
+
+object StoryCompiler

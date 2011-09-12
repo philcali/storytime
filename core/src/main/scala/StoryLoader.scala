@@ -48,7 +48,7 @@ object StoryLoader {
       !folder.getName.startsWith(".") && folder.isDirectory()
 
     val templates = templateLocation.listFiles.filter { f => 
-      folders(f) && (f.getName != "local" || f.getName != "global")
+      folders(f) && (validNames(f.getName))
     }
 
     if (templates.isEmpty) 
@@ -119,6 +119,10 @@ object StoryLoader {
     }
   }
 
+  private def validNames(name: String) = {
+    List("global", "local", "file").foldLeft (true) { _ || _ != name }
+  }
+
   private def loadLocal(name: String) = {
     val isJar = (file: File) => file.getName.endsWith(".jar")
 
@@ -141,6 +145,8 @@ object StoryLoader {
 class TemplateClass(name: String, clazz: Class[_]) extends StoryKey {
   val key = name
 
+  lazy val metaKey = classOf[StoryMetaKey[_]]
+
   def apply(book: StoryBook) {
     val app = clazz.getDeclaredMethod("apply", classOf[StoryBook])
 
@@ -153,13 +159,15 @@ class TemplateClass(name: String, clazz: Class[_]) extends StoryKey {
     story.invoke(null).asInstanceOf[StoryMode]
   }
 
-  def arguments = {
-    val metaKey = classOf[StoryMetaKey[_]]
+  def arguments = defaultKeys ++ keysToActualKeys(clazz)
 
-    val keys = clazz.getDeclaredMethods.filter(_.getReturnType == metaKey)
+  def defaultKeys = keysToActualKeys(StoryKeys.getClass)
+
+  private def keysToActualKeys(c: Class[_]) = {
+    val keys = c.getDeclaredMethods.filter(_.getReturnType == metaKey)
 
     val metaKeys = keys.map(_.invoke(null).asInstanceOf[StoryMetaKey[_]])
 
     metaKeys.sortWith(_.key < _.key)
-  } 
+  }
 }
