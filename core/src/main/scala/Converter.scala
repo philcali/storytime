@@ -3,10 +3,17 @@ package storytime
 import scala.io.Source.{fromFile => open}
 import com.tristanhunt.knockoff.{Block}
 
-import StoryKeys.preprocessors
+import StoryKeys.{ preprocessors, separator }
 
 object Converter {
   def apply(mode: StoryMode) = new Converter(mode)
+
+  def stripMeta(contents: String) = {
+    MetaStripper create contents match {
+      case Array(definedMeta, markdown) => markdown
+      case _ => contents
+    }
+  }
 }
 
 class Converter private (val mode: StoryMode) extends StoryDiscounter {
@@ -18,15 +25,17 @@ class Converter private (val mode: StoryMode) extends StoryDiscounter {
   }
 
   def convert(contents: String) = {
+    val stripped = Converter.stripMeta(contents)
+
     val preprocessed = 
-      mode.getOrElse(preprocessors, Nil).foldLeft(contents) { (in, pre) =>
+      mode.getOrElse(preprocessors, Nil).foldLeft(stripped) { (in, pre) =>
         pre.process(in)
       }
 
-    val splitter = mode.get[String]("separator").map { sep =>
+    val splitter = mode.get(separator).map { sep =>
       new StoryPreprocessor with Separator {
         val key = sep 
-        def create(contents: String) = contents.split(sep)
+        def create(contents: String) = key.r.split(contents)
       }
     } getOrElse Pages
 
@@ -49,8 +58,14 @@ trait Separator extends StoryPreprocessor {
   def preprocess (contents: String) = ""
 }
 
-object Pages extends StoryPreprocessor with Separator {
+trait Splitter extends Separator {
+  def create (contents: String) = reg.split(contents)
+}
+
+object Pages extends StoryPreprocessor with Splitter {
   val key = "page"
-  
-  def create(contents: String) = reg.split(contents)
+}
+
+object MetaStripper extends StoryPreprocessor with Splitter {
+  val key = "meta"
 }
