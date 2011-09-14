@@ -21,8 +21,11 @@ object StoryLoader {
     this.getClass.getClassLoader.asInstanceOf[URLClassLoader]
   }
 
-  private def addURL(file: File) {
+  private def toURL(path: File) = path.toURI.toURL
+
+  def addURL(file: File) {
     val url = toURL(file)
+
     val classLoader = loader
     val clazz = classOf[URLClassLoader]
 
@@ -31,9 +34,7 @@ object StoryLoader {
     method.invoke(classLoader, url)
   }
 
-  private def toURL(path: File) = path.toURI.toURL
-
-  private def createIfNotExists(base: String, name: String) = {
+  def createIfNotExists(base: String, name: String) = {
     val dir = new File(base, name)
   
     if (!dir.exists) dir.mkdir()
@@ -57,7 +58,11 @@ object StoryLoader {
       Right(templates)
   }
 
-  def loadTemplate(templateName: String) = {
+  def loadTemplate(name: String) = {
+    loadLocalTemplate(name).fold(_ => loadClass(name), Some(_))
+  }
+
+  def loadLocalTemplate(templateName: String) = {
     listTemplates.fold(str => Left(str), {
       _.find(_.getName == templateName) match {
         case Some(f) => 
@@ -119,8 +124,10 @@ object StoryLoader {
     }
   }
 
+  def configRefs = List("global", "local", "file")
+
   private def validNames(name: String) = {
-    List("global", "local", "file").foldLeft (true) { _ || _ != name }
+    configRefs.foldLeft (true) { _ || _ != name }
   }
 
   private def loadLocal(name: String) = {
@@ -159,15 +166,27 @@ class TemplateClass(name: String, clazz: Class[_]) extends StoryKey {
     story.invoke(null).asInstanceOf[StoryMode]
   }
 
-  def arguments = defaultKeys ++ keysToActualKeys(clazz)
+  def allKeys = (defaultKeys ++ templateKeys).sortWith(_.key < _.key)
+
+  def templateKeys = keysToActualKeys(clazz)
 
   def defaultKeys = keysToActualKeys(StoryKeys.getClass)
 
   private def keysToActualKeys(c: Class[_]) = {
+    val obj = instance(c).getOrElse(null)
+
     val keys = c.getDeclaredMethods.filter(_.getReturnType == metaKey)
 
-    val metaKeys = keys.map(_.invoke(null).asInstanceOf[StoryMetaKey[_]])
+    val metaKeys = keys.map(_.invoke(obj).asInstanceOf[StoryMetaKey[_]])
 
     metaKeys.sortWith(_.key < _.key)
+  }
+
+  private def instance(c: Class[_]) = {
+    try {
+      Some(c.getField("MODULE$").get(null))
+    } catch {
+      case _ => None
+    }
   }
 }
