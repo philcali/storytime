@@ -44,22 +44,22 @@ Use the arrow keys to move forward or backward
 
 The following code will be hidden:
 
-[!build]
+@build
 ```scala
 object Hello extends App {
   println("hello world!")
 }
 ```
-[!end]
+@end
 
 
-[!quote]
+@quote
 Glamor Glamor! More power to you!
-[!end]
+@end
 
-[!author]
+@author
 Philip Cali
-[!end]
+@end
 """
 
   "DefaultTemplate" should "be loadable via StoryLoader" in {
@@ -93,6 +93,6 @@ Philip Cali
     template(Converter(mode).convert(markdown))
 
     new java.io.File("converted/index.html") should be ('exists)
-    new java.io.File("converted/assests") should be ('exists)
+    new java.io.File("converted/assets") should be ('exists)
   }
 }

@@ -12,7 +12,7 @@ trait StoryKey {
 }
 
 trait StoryPreprocessor extends StoryKey {
-  lazy val reg = ("""\[!\s?""" + key + """\s?\]""").r
+  lazy val reg = ("""\s?@""" + key).r
 
   def preprocess(contents: String): String
   def process(contents: String) = 

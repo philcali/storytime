@@ -21,7 +21,7 @@ class StoryPage (blocks: Seq[Block], val contents: xml.Node, val number: Int) {
   }
 }
 
-trait StoryDiscounter extends FencedDiscounter {
+trait StoryDiscounter extends FencedDiscounter { self =>
   val mode: StoryMode
 
   lazy val embedded = mode.getOrElse(embed, false)
@@ -36,7 +36,7 @@ trait StoryDiscounter extends FencedDiscounter {
   override def blockToXHTML: Block => xml.Node = block => block match {
     case StoryBlock(key, children, _) => 
       mode.getOrElse(macros, Nil).find(_.key == key)
-                      .getOrElse(UndefinedHandler).handle(this, children)
+                      .getOrElse(UndefinedHandler).handle(self, children)
     case _ => super.blockToXHTML(block)
   }
 
@@ -84,14 +84,14 @@ trait StoryDiscounter extends FencedDiscounter {
 }
 
 trait StoryChunkParser extends FencedChunkParser {
-  val keyId = """\[!\s?(.*)\s?\]\n""".r
+  val keyId = """@(.*)\s?\n""".r
 
   override def chunk = storykey | super.chunk 
 
   def unendingTextLine = 
-    """(?!\[\!\s?end\s?\])[^\n]+\n""".r ^^ { TextChunk(_) }
+    """(?!\@end\s?)[^\n]+\n""".r ^^ { TextChunk(_) }
 
-  def storykey = keyId ~ rep1(unendingTextLine | emptyLine) <~ opt("[!end]") ^^ { 
+  def storykey = keyId ~ rep1(unendingTextLine | emptyLine) <~ opt("@end") ^^ { 
     case keyId(k) ~ contents => StoryChunk(k.trim, foldedString(contents)) 
   }
 

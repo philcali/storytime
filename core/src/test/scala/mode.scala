@@ -52,15 +52,15 @@ class StoryTest extends FlatSpec with ShouldMatchers {
 """
 # Welcome
 
-[!boilerplate]
+@boilerplate
 
 I hope you find this as interesting as I do...
 
-[!page]
+@page
 
-[!test]
+@test
 This is stuff in here **bolded** or _italicized_
-[!end]
+@end
 
 It might even be stuff wrapped in a test div!
 """
