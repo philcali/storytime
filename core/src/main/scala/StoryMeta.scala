@@ -26,7 +26,7 @@ class OverwriteMeta[A](
   meta: StoryMetaKey[A], 
   value: A
 ) extends Meta[A](meta, value) with MetaAction[A] {
-  def process(original: A) = Meta[A](this.meta, value)
+  def process(original: A) = new OverwriteMeta[A](this.meta, value)
 }
 
 class AddSeqMeta[A](
@@ -34,5 +34,5 @@ class AddSeqMeta[A](
   value: Seq[A]
 ) extends Meta[Seq[A]](meta: StoryMetaKey[Seq[A]], value) with MetaAction[Seq[A]] {
   def process(original: Seq[A]) =
-    Meta[Seq[A]](this.meta, original ++ this.value)
+    new AddSeqMeta[A](this.meta, original ++ this.value)
 }
