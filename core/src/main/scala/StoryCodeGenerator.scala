@@ -5,15 +5,15 @@ import java.io.File
 import scala.io.Source.{fromFile => open}
 
 trait LocalGeneration extends FileGeneration with StoryFileReader {
-  val fileName = "%s.story" format (key)
+  def fileName = "%s.story" format (key)
 
-  val path = new File(configLocation, key)
+  def path = new File(configLocation, key)
 
   def changed() = {
-    if (file.exists && !path.exists()) {
+    if (input.exists && !path.exists()) {
       true
-    } else if (file.exists() && path.exists()) {
-      file.lastModified() > path.lastModified()
+    } else if (input.exists() && path.exists()) {
+      input.lastModified() > srcFile.lastModified()
     } else {
       false
     }
@@ -21,7 +21,7 @@ trait LocalGeneration extends FileGeneration with StoryFileReader {
 }
 
 trait FileGeneration extends StoryCodeGenerator {
-  val path: File 
+  def path: File 
 
   def write() {
     val src = srcPath
@@ -35,18 +35,25 @@ trait FileGeneration extends StoryCodeGenerator {
       build.mkdirs()
     }
 
-    writeSource(src)
+    writeSource()
 
-    writeBuild(build)
+    writeBuild()
   }
 
-  private def srcPath() =  {
-    new File("%s/%s/src/main/scala".format(path.getAbsolutePath, key))
+  def srcPath() =  {
+    new File("%s/src/main/scala".format(path.getAbsolutePath, key))
   }
 
-  private def buildPath() = {
-    new File("%s/%s/project/".format(path.getAbsolutePath, key))
+  def buildPath() = {
+    new File("%s/project/".format(path.getAbsolutePath, key))
   }
+
+  def srcFile = {
+    val scalaFile = "%sTemplate.scala".format(key.capitalize)
+    new File(srcPath, scalaFile)
+  }
+
+  def projectFile = new File(buildPath, "build.scala")
 
   private def write(location: File, contents: String) {
     import java.io.FileWriter
@@ -56,26 +63,22 @@ trait FileGeneration extends StoryCodeGenerator {
     writer.close()
   }
 
-  private def writeSource(src: File) {
-    val scalaFile = "%sTemplate.scala".format(key.capitalize)
-    
-    write(new File(src, scalaFile), generate.source)
+  private def writeSource() {
+    write(srcFile, generate.source)
   }
 
-  private def writeBuild(build: File) {
-    val buildFile = new File(build, "build.scala")
-
-    write(buildFile, generate.build)
+  private def writeBuild() {
+    write(projectFile, generate.build)
   }
 }
 
 trait StoryFileReader extends StoryCodeGenerator {
-  val file: File
+  def input: File
 
   def source = readStory()
 
   private def readStory() = {
-    open(file).getLines.mkString("\n")
+    open(input).getLines.mkString("\n")
   }
 }
 
@@ -108,11 +111,12 @@ trait StoryCodeGenerator extends StoryKey {
        |%s
        |
        |object %sTemplate extends StoryBoard {
+       |  val key = "%s"
        |  def story() = Seq (
        |%s
        |  )
        |}""".stripMargin.format(
-        key, imports.mkString("\n"), key.capitalize, source
+        key, imports.mkString("\n"), key.capitalize, key, source
       )
     )
   }
@@ -167,8 +171,7 @@ case class sbtTemplate(imports: Seq[String], source: String) {
        |
        |  private def definePathTask = (fullClasspath in Compile, streams) map {
        |    (fp, s) =>
-       |      s.log.info("Full Classpath")
-       |      fp foreach (p => s.log.info(p.data.getAbsolutePath))
+       |      IO.write(file(".") / "defined.path", fp.map(_.data).mkString("\n"))
        |  }
        |
        |  def generalSettings = Defaults.defaultSettings ++ Seq (

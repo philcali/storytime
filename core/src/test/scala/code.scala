@@ -7,7 +7,7 @@ import org.scalatest.matchers.ShouldMatchers
 import java.io.File
 
 class Generator extends FlatSpec with ShouldMatchers with BeforeAndAfterAll {
-  val destination = new File(".")
+  val destination = new File(".", "test")
 
   val story = 
 """
@@ -25,10 +25,9 @@ macros += macro("test") { (dis, blocks) =>
 }
 """
 
-  val input = new File("test.story")
+  val inputed = new File("test.story")
 
   override def afterAll(config: Map[String, Any]) {
-    val testFolder = new File(destination, "test")
 
     def recurse(f: File) {
       if (f.isDirectory)
@@ -37,7 +36,7 @@ macros += macro("test") { (dis, blocks) =>
       f.delete
     }
 
-    List(testFolder, input) foreach (recurse)
+    List(destination, inputed) foreach (recurse)
   }
 
   "Test generator" should "generate the correct source" in {
@@ -54,13 +53,13 @@ macros += macro("test") { (dis, blocks) =>
   "File Reader" should "generate source from a file" in {
     import java.io.FileWriter
 
-    val writer = new FileWriter(input)
+    val writer = new FileWriter(inputed)
     writer.write(story)
     writer.close()
 
     val testgenerator = new StoryFileReader {
       val key = "test"
-      val file = input
+      def input = inputed
     }
 
     val template = testgenerator.generate()
@@ -77,7 +76,7 @@ macros += macro("test") { (dis, blocks) =>
 
     generator.write()
 
-    new File(destination, "test/src/main/scala/TestTemplate.scala") should be ('exists)
+    new File(destination, "/src/main/scala/TestTemplate.scala") should be ('exists)
   }
 
   "A SBT template" should "find the project refs" in {
