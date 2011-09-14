@@ -9,9 +9,9 @@ object DefaultTemplate extends StoryTemplate {
   def story() = Seq(
     paginate := false,
     resources ++= Seq(
-      "assests/prettify.js",
-      "assests/styles.css",
-      "assests/slides.js"
+      "assets/prettify.js",
+      "assets/styles.css",
+      "assets/slides.js"
     ),
     output := "converted",
     macros += new BuildHandler
