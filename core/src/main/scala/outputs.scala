@@ -17,7 +17,7 @@ object DefaultTemplate extends StoryTemplate {
     macros += new BuildHandler
   )
 
-  def template(data: TemplateData) = {
+  def defaultTemplate(data: TemplateData) = { 
     <html>
       <head>
         <title>{ data.title }</title>
@@ -35,5 +35,11 @@ object DefaultTemplate extends StoryTemplate {
         </section>
       </body>
     </html>
+  }
+
+  def template(data: TemplateData) = {
+    val handle = data.mode.getOrElse(html, defaultTemplate _)
+
+    handle(data)
   }
 }

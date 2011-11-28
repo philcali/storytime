@@ -115,7 +115,7 @@ trait StoryTemplate extends StoryKey with StoryBoard { parent =>
     }
   }
 
-  def outputConverted(converted: xml.Node, location: String) {
+  def outputConverted(converted: xml.NodeSeq, location: String) {
     val result = "<!DOCTYPE html>\n" + converted.toString 
 
     val bytes = result.getBytes("UTF8")   
@@ -125,7 +125,7 @@ trait StoryTemplate extends StoryKey with StoryBoard { parent =>
     out.close()
   }
 
-  def template(data: TemplateData): xml.Node
+  def template(data: TemplateData): xml.NodeSeq
 }
 
 case class Resource(name: String, contentType: String, embedded: Boolean)

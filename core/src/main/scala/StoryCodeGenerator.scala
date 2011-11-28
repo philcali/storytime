@@ -176,7 +176,6 @@ case class sbtTemplate(imports: Seq[String], source: String) {
        |
        |  def generalSettings = Defaults.defaultSettings ++ Seq (
        |    definePath <<= definePathTask,
-       |    scalaVersion := "2.8.1",
        |    %s
        |  )
        |
