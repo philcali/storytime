@@ -14,8 +14,10 @@ object StoryBuild extends Build {
     "storytime-core",
     file("core"),
     settings = generalSettings ++ Seq (
+      crossScalaVersions := Seq("2.8.1", "2.9.1"),
+
       libraryDependencies <++= (scalaVersion) { sv => Seq (
-        "net.databinder" %% "pamflet-knockoff" % "0.2.5",
+        "net.databinder" %% "pamflet-knockoff" % "0.3.0",
         "commons-codec" % "commons-codec" % "1.5",
         (sv match {
           case v if v.contains("2.8") =>
@@ -32,7 +34,7 @@ object StoryBuild extends Build {
     file("app"),
     settings = generalSettings ++ Seq (
       libraryDependencies <++= (sbtVersion) { sv => Seq (
-        "org.scala-tools.sbt" % "launcher-interface_2.8.1" % sv % "provided",
+        "org.scala-tools.sbt" %% "launcher-interface" % sv % "provided",
         "net.databinder" %% "dispatch-http" % "0.8.5"
       ) }
     )
