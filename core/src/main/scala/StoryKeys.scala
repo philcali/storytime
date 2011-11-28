@@ -38,9 +38,6 @@ trait Keys {
 
   val preprocessors = StoryMetaKey[Seq[StoryPreprocessor]]("preprocessors",
     "Defines template preprocessors")
-
-  val html = StoryMetaKey[(TemplateData => xml.NodeSeq)]("html",
-    "Override html for specific formatting rules.")
 }
 
 object StoryKeys extends Keys 
