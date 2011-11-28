@@ -10,7 +10,7 @@ import java.io.{
 import StoryLoader.{ copy, configLocation, createIfNotExists }
 
 object StoryCompiler {
-  val version = "0.10.1"
+  val version = "0.11.2"
 
   val baseUrl = 
     "http://typesafe.artifactoryonline.com/typesafe/ivy-releases/org.scala-tools.sbt/sbt-launch/%s/sbt-launch.jar".format(version)
