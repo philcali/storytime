@@ -1,13 +1,13 @@
 package storytime
 
-import StoryLoader.{ configLocation, templateLocation }
+import StoryLoader.{ storyLocation, configLocation, templateLocation }
 import java.io.File
 import scala.io.Source.{fromFile => open}
 
 trait LocalGeneration extends FileGeneration with StoryFileReader {
   def fileName = "%s.story" format (key)
 
-  def path = new File(configLocation, key)
+  def path = new File(storyLocation, key)
 
   def changed() = {
     if (input.exists && !path.exists()) {

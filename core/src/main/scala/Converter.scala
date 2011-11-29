@@ -18,7 +18,9 @@ object Converter {
 
 class Converter private (val mode: StoryMode) extends StoryDiscounter {
 
-  def fromFile(mdLocation: String) = {
+  def fromFile(mdfile: java.io.File): StoryBook = fromFile(mdfile.getAbsolutePath)
+
+  def fromFile(mdLocation: String): StoryBook = {
     val contents = open(mdLocation).getLines.mkString("\n")
 
     convert(contents)

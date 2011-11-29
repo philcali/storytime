@@ -1,6 +1,6 @@
 package storytime
 
-import java.net.{URLClassLoader, URL}
+import java.net.{ URLClassLoader, URL }
 import java.io.{
   File,
   OutputStream,
@@ -13,6 +13,9 @@ import java.io.{
 object StoryLoader {
   lazy val templateLocation =
     createIfNotExists(configLocation.getAbsolutePath, "templates")
+
+  lazy val storyLocation =
+    createIfNotExists(configLocation.getAbsolutePath, "configs")
 
   lazy val configLocation = 
     createIfNotExists(System.getProperty("user.home"), ".storytime")
@@ -32,6 +35,14 @@ object StoryLoader {
     val method = clazz.getDeclaredMethod("addURL", classOf[URL])
     method.setAccessible(true)
     method.invoke(classLoader, url)
+  }
+
+  def delete(folder: File) {
+    if (folder.isDirectory) {
+      folder.listFiles.foreach(delete)
+    }
+
+    folder.delete()
   }
 
   def createIfNotExists(base: String, name: String) = {
