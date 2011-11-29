@@ -35,6 +35,7 @@ object StoryBuild extends Build {
     settings = generalSettings ++ Seq (
       libraryDependencies <++= (sbtVersion) { sv => Seq (
         "org.scala-tools.sbt" %% "launcher-interface" % sv % "provided",
+        "org.clapper" %% "argot" % "0.3.5",
         "net.databinder" %% "dispatch-http" % "0.8.5"
       ) }
     )
